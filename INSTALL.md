@@ -18,12 +18,24 @@ This repository is a portable Agent Skill package. An Agent receiving this repos
 8. Run `python3 -m skill_router.verify --path <installed-path>` if Python is available.
 9. Report the installed path, enabled capabilities, and any unavailable optional features.
 
+The installer writes an installation record. Updates replace only files managed by this package. Uninstallation refuses directories without that record and preserves files added by the user.
+
 ## Reference installer
 
 From the repository root, after user confirmation:
 
 ```bash
 python3 -m skill_router.install \
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
+  --approve
+```
+
+To preview or confirm removal:
+
+```bash
+python3 -m skill_router.install uninstall \
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router"
+python3 -m skill_router.install uninstall \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
 ```

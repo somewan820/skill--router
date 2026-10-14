@@ -5,7 +5,7 @@ from pathlib import Path
 from skill_router.models import RouteMode, RouteRequest
 from skill_router.registry import LocalRegistry
 from skill_router.router import SkillRouter
-from skill_router.install import install
+from skill_router.install import INSTALL_RECORD, install, uninstall
 from skill_router.verify import verify
 from skill_router.config import RouterConfig, load, save
 
@@ -157,6 +157,19 @@ triggers: [credentials]
         result = install(source, destination, approve=True)
         self.assertTrue(result["installed"])
         self.assertEqual(verify(destination), [])
+
+    def test_uninstall_only_removes_files_managed_by_installer(self):
+        source = Path(__file__).parents[1]
+        destination = Path(self.temp.name) / "installed" / "skill-router"
+        install(source, destination, approve=True)
+        user_file = destination / "user-data.txt"
+        user_file.write_text("preserve me", encoding="utf-8")
+        preview = uninstall(destination)
+        self.assertTrue(preview["requires_confirmation"])
+        result = uninstall(destination, approve=True)
+        self.assertTrue(result["uninstalled"])
+        self.assertTrue(user_file.is_file())
+        self.assertFalse((destination / INSTALL_RECORD).exists())
 
 
 if __name__ == "__main__":

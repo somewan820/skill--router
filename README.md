@@ -33,6 +33,30 @@ python3 -m skill_router.verify \
   --path "$AGENT_SKILL_DIRECTORY/skill-router"
 ```
 
+更新时使用同一个安装命令即可；安装器会覆盖它自己管理的文件，并保留目标目录中的用户文件：
+
+```bash
+python3 -m skill_router.install \
+  --source . \
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
+  --approve
+```
+
+卸载前先预览：
+
+```bash
+python3 -m skill_router.install uninstall \
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router"
+```
+
+确认卸载：
+
+```bash
+python3 -m skill_router.install uninstall \
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
+  --approve
+```
+
 ## 快速开始
 
 ```bash
