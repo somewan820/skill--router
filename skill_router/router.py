@@ -1,44 +1,23 @@
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 
 from .models import RouteMode, RouteRequest, RouteResult, SkillMetadata, SkillSelection
 from .registry import Registry
 
 
 def _tokens(text: str) -> set[str]:
-    return set(re.findall(r"[\w.-]+", text.lower()))
-
-
-INTENT_ALIASES = {
-    "审查": ("review", "code"),
-    "评审": ("review", "code"),
-    "代码审查": ("code", "review"),
-    "代码评审": ("code", "review"),
-    "代码变更": ("code", "diff", "change"),
-    "当前分支": ("branch", "diff"),
-    "安全性": ("security",),
-    "回归风险": ("regression",),
-    "兼容性": ("compatibility",),
-    "创建": ("create",),
-    "工单": ("ticket", "issue"),
-    "问题": ("finding", "issue"),
-    "项目": ("project",),
-    "关联": ("link", "associate"),
-}
-
-
-def _expanded_tokens(text: str) -> set[str]:
-    tokens = _tokens(text)
-    for phrase, aliases in INTENT_ALIASES.items():
-        if phrase in text:
-            tokens.update(aliases)
+    """Tokenize Latin words and CJK n-grams without domain-specific synonyms."""
+    lower = text.lower()
+    tokens = set(re.findall(r"[a-z0-9][a-z0-9_.-]*", lower))
+    for run in re.findall(r"[\u3400-\u9fff]+", lower):
+        tokens.update(run)
+        tokens.update(run[index:index + 2] for index in range(len(run) - 1))
     return tokens
 
 
-def _has_any(text: str, terms: tuple[str, ...]) -> bool:
-    return any(term in text for term in terms)
+def _contains(text: str, values: tuple[str, ...]) -> int:
+    return sum(1 for value in values if value.lower() in text)
 
 
 class SkillRouter:
@@ -62,13 +41,12 @@ class SkillRouter:
                 external_search=request.allow_external_search,
             )
 
-        confidence = min(1.0, selections[0].score)
         return RouteResult(
             request.mode,
             "load",
             selections,
-            confidence,
-            reason=self._reason(request.text, selections),
+            min(1.0, selections[0].score),
+            reason=self._reason(selections),
             plan=self._plan(selections, skills),
         )
 
@@ -94,51 +72,50 @@ class SkillRouter:
 
     def _rank(self, text: str, skills: list[SkillMetadata]) -> list[SkillSelection]:
         query = text.lower()
-        words = _expanded_tokens(query)
-        scored: list[SkillSelection] = []
+        query_tokens = _tokens(query)
+        scored: list[tuple[SkillSelection, SkillMetadata]] = []
         for skill in skills:
-            metadata = set(_tokens(" ".join([
-                skill.name, skill.description, *skill.domains,
-                *skill.resource_types, *skill.operations, *skill.triggers,
-            ])))
-            overlap = len(words & metadata)
-            exact_triggers = sum(1 for trigger in skill.triggers if trigger.lower() in query)
-            exact_name = 0.35 if skill.name.lower() in query else 0
-            url_bonus = 0.25 if any(marker in query for marker in ("doubao.com/docx", "/docx/", ".xlsx", ".pptx")) and (
-                skill.resource_types or skill.domains
-            ) else 0
-            penalty = sum(0.2 for item in skill.not_for if item.lower() in query)
-            score = min(
-                1.0,
-                overlap / max(4, min(10, len(words)))
-                + exact_triggers * 0.2
-                + exact_name
-                + url_bonus
-                - penalty,
+            name_tokens = _tokens(skill.name)
+            metadata_tokens = _tokens(" ".join([
+                skill.name,
+                skill.description,
+                *skill.domains,
+                *skill.resource_types,
+                *skill.operations,
+                *skill.triggers,
+            ]))
+            token_overlap = len(query_tokens & metadata_tokens)
+            name_overlap = len(query_tokens & name_tokens)
+            trigger_hits = _contains(query, skill.triggers)
+            excluded_hits = _contains(query, skill.not_for)
+            # Structured triggers and exact Skill names are intentionally
+            # stronger than incidental description-word overlap.
+            score = (
+                min(0.35, token_overlap / max(8, len(query_tokens)))
+                + min(0.5, trigger_hits * 0.25)
+                + min(0.35, name_overlap * 0.2)
+                + skill.priority * 0.01
+                - min(0.5, excluded_hits * 0.2)
             )
-            # A general code-change request should not activate a simplification
-            # audit unless simplification is actually part of the task.
-            if "simplif" in " ".join(metadata) and not _has_any(
-                query, ("简化", "simplify", "simplification", "熵回收", "dead code")
-            ):
-                score -= 0.25
-            if score >= 0.28:
-                reason = f"匹配 {overlap} 个任务词"
-                if exact_triggers:
-                    reason += f"，命中 {exact_triggers} 个触发词"
-                if exact_name:
-                    reason += "，命中 Skill 名称"
-                scored.append(SkillSelection(skill.name, max(0.0, score), reason))
+            if score < 0.28:
+                continue
+            reasons = [f"匹配 {token_overlap} 个元数据词"]
+            if trigger_hits:
+                reasons.append(f"命中 {trigger_hits} 个触发词")
+            if name_overlap:
+                reasons.append("命中 Skill 名称")
+            scored.append((SkillSelection(skill.name, min(1.0, max(0.0, score)), "，".join(reasons)), skill))
 
-        ranked = sorted(scored, key=lambda item: (-item.score, item.name))
-        names = {item.name for item in ranked}
-        # code-review and review-agent overlap substantially. Prefer the
-        # user-facing code review Skill for ordinary branch/PR review tasks.
-        if {"code-review", "review-agent"} <= names and _has_any(
-            query, ("代码", "分支", "pr", "pull request", "diff", "变更")
-        ):
-            ranked = [item for item in ranked if item.name != "review-agent"]
-        return ranked
+        ranked: list[tuple[SkillSelection, SkillMetadata]] = []
+        groups: dict[str, tuple[SkillSelection, SkillMetadata]] = {}
+        for selection, skill in sorted(scored, key=lambda item: (-item[0].score, -item[1].priority, item[0].name)):
+            if skill.exclusive_group:
+                current = groups.get(skill.exclusive_group)
+                if current:
+                    continue
+                groups[skill.exclusive_group] = (selection, skill)
+            ranked.append((selection, skill))
+        return [selection for selection, _ in ranked]
 
     def _with_dependencies(
         self, selections: list[SkillSelection], skills: list[SkillMetadata], max_skills: int
@@ -148,13 +125,15 @@ class SkillRouter:
         for item in list(result.values()):
             for dependency in by_name.get(item.name, SkillMetadata("", "")).dependencies:
                 if dependency in by_name and len(result) < max_skills:
-                    result.setdefault(dependency, SkillSelection(dependency, item.score * 0.9, f"被 {item.name} 依赖"))
+                    result.setdefault(
+                        dependency,
+                        SkillSelection(dependency, item.score * 0.9, f"被 {item.name} 依赖"),
+                    )
         return sorted(result.values(), key=lambda item: (-item.score, item.name))
 
     @staticmethod
-    def _reason(text: str, selections: list[SkillSelection]) -> str:
-        labels = ", ".join(item.name for item in selections)
-        return f"根据任务内容选择 {labels}"
+    def _reason(selections: list[SkillSelection]) -> str:
+        return f"根据任务内容选择 {', '.join(item.name for item in selections)}"
 
     @staticmethod
     def _plan(selections: list[SkillSelection], skills) -> list[dict[str, object]]:
@@ -167,4 +146,3 @@ class SkillRouter:
             }
             for item in selections
         ]
-

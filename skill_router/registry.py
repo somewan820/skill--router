@@ -66,6 +66,8 @@ def parse_skill(path: Path) -> SkillMetadata | None:
         not_for=_tuple(data.get("not_for")),
         related_skills=_tuple(data.get("related_skills")),
         dependencies=_tuple(data.get("dependencies")),
+        exclusive_group=str(data["exclusive_group"]) if data.get("exclusive_group") else None,
+        priority=int(data.get("priority", 0)),
         version=str(data["version"]) if data.get("version") else None,
     )
 

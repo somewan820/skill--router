@@ -76,8 +76,14 @@ operations: [read, create, edit]
 triggers: [飞书文档, docx, doubao.com/docx]
 not_for: [file_permission, file_move]
 related_skills: [lark-drive, lark-task]
+exclusive_group: document-reader
+priority: 10
 ---
 ```
+
+`triggers` 应包含用户实际可能使用的词，可以同时声明多语言触发词。Router 不在核心代码中内置任何具体领域或 Skill 名称的同义词。
+
+当多个 Skill 提供互斥的同类能力时，可以声明相同的 `exclusive_group`，路由器会保留得分最高的一个。需要串联的 Skill 使用 `dependencies`；可以同时协作的 Skill 不要放入同一个排他组。
 
 ## 安全默认值
 

@@ -76,7 +76,7 @@ triggers: [待办, 行动项, 任务]
 name: code-review
 description: Review code changes for security, regression, compatibility, and correctness
 operations: [review]
-triggers: [code review, pull request, diff, security, regression, compatibility]
+triggers: [审查, 代码审查, 代码评审, code review, pull request, diff, security, regression, compatibility]
 ---
 # review
 """)
@@ -84,7 +84,7 @@ triggers: [code review, pull request, diff, security, regression, compatibility]
 name: linear
 description: Create and update Linear issues, tickets, and projects
 operations: [create_issue]
-triggers: [Linear, issue, ticket, project]
+triggers: [Linear, 工单, 问题, 项目, issue, ticket, project]
 ---
 # linear
 """)

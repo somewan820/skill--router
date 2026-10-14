@@ -24,6 +24,8 @@ class SkillMetadata:
     not_for: tuple[str, ...] = ()
     related_skills: tuple[str, ...] = ()
     dependencies: tuple[str, ...] = ()
+    exclusive_group: str | None = None
+    priority: int = 0
     version: str | None = None
 
 
