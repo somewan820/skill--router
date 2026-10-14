@@ -7,6 +7,7 @@ from skill_router.registry import LocalRegistry
 from skill_router.router import SkillRouter
 from skill_router.install import install
 from skill_router.verify import verify
+from skill_router.config import RouterConfig, load, save
 
 
 def write_skill(root: Path, name: str, body: str) -> None:
@@ -106,6 +107,11 @@ triggers: [simplify, dead code, entropy]
     def test_skill_package_manifest_is_valid(self):
         root = Path(__file__).parents[1]
         self.assertEqual(verify(root), [])
+
+    def test_router_config_persists_mode_and_limits(self):
+        path = Path(self.temp.name) / "config.json"
+        save(RouterConfig(RouteMode.MANUAL, True, 5), path)
+        self.assertEqual(load(path), RouterConfig(RouteMode.MANUAL, True, 5))
 
     def test_installer_previews_then_copies_after_approval(self):
         source = Path(__file__).parents[1]

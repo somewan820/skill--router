@@ -43,9 +43,29 @@ python3 -m skill_router.cli --skills-dir ~/.cursor/skills \
 设置模式：
 
 ```bash
-python -m skill_router.cli config --mode manual
-python -m skill_router.cli config --mode off
-python -m skill_router.cli config --mode auto
+python3 -m skill_router.cli config --mode manual
+python3 -m skill_router.cli config --mode off
+python3 -m skill_router.cli config --mode auto
+python3 -m skill_router.cli status
+```
+
+配置默认保存到 `~/.config/skill-router/config.json`。也可以通过 `--config-file` 或 `SKILL_ROUTER_CONFIG` 指定其他配置文件。
+
+配置外部搜索和最大 Skill 数量：
+
+```bash
+python3 -m skill_router.cli config \
+  --mode auto \
+  --allow-external-search \
+  --max-skills 3
+```
+
+单次请求可以覆盖持久化配置：
+
+```bash
+python3 -m skill_router.cli route \
+  --mode off \
+  "这次不要自动选择 Skill"
 ```
 
 读取结果：
