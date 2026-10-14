@@ -37,6 +37,10 @@ def _expanded_tokens(text: str) -> set[str]:
     return tokens
 
 
+def _has_any(text: str, terms: tuple[str, ...]) -> bool:
+    return any(term in text for term in terms)
+
+
 class SkillRouter:
     def __init__(self, registry: Registry):
         self.registry = registry
@@ -99,17 +103,42 @@ class SkillRouter:
             ])))
             overlap = len(words & metadata)
             exact_triggers = sum(1 for trigger in skill.triggers if trigger.lower() in query)
+            exact_name = 0.35 if skill.name.lower() in query else 0
             url_bonus = 0.25 if any(marker in query for marker in ("doubao.com/docx", "/docx/", ".xlsx", ".pptx")) and (
                 skill.resource_types or skill.domains
             ) else 0
             penalty = sum(0.2 for item in skill.not_for if item.lower() in query)
-            score = min(1.0, overlap / max(4, min(10, len(words))) + exact_triggers * 0.2 + url_bonus - penalty)
+            score = min(
+                1.0,
+                overlap / max(4, min(10, len(words)))
+                + exact_triggers * 0.2
+                + exact_name
+                + url_bonus
+                - penalty,
+            )
+            # A general code-change request should not activate a simplification
+            # audit unless simplification is actually part of the task.
+            if "simplif" in " ".join(metadata) and not _has_any(
+                query, ("简化", "simplify", "simplification", "熵回收", "dead code")
+            ):
+                score -= 0.25
             if score >= 0.28:
                 reason = f"匹配 {overlap} 个任务词"
                 if exact_triggers:
                     reason += f"，命中 {exact_triggers} 个触发词"
+                if exact_name:
+                    reason += "，命中 Skill 名称"
                 scored.append(SkillSelection(skill.name, max(0.0, score), reason))
-        return sorted(scored, key=lambda item: (-item.score, item.name))
+
+        ranked = sorted(scored, key=lambda item: (-item.score, item.name))
+        names = {item.name for item in ranked}
+        # code-review and review-agent overlap substantially. Prefer the
+        # user-facing code review Skill for ordinary branch/PR review tasks.
+        if {"code-review", "review-agent"} <= names and _has_any(
+            query, ("代码", "分支", "pr", "pull request", "diff", "变更")
+        ):
+            ranked = [item for item in ranked if item.name != "review-agent"]
+        return ranked
 
     def _with_dependencies(
         self, selections: list[SkillSelection], skills: list[SkillMetadata], max_skills: int

@@ -88,6 +88,14 @@ triggers: [Linear, issue, ticket, project]
 ---
 # linear
 """)
+        write_skill(root, "simplify-codebase", """---
+name: simplify-codebase
+description: Simplification audit for deleting dead code and reducing accidental complexity
+operations: [simplify]
+triggers: [simplify, dead code, entropy]
+---
+# simplify
+""")
         result = SkillRouter(LocalRegistry([root])).route(RouteRequest(
             "请审查当前分支的代码变更，检查安全性和回归风险；"
             "把问题创建成 Linear 工单并关联到当前项目。",
