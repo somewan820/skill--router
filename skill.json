@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "id": "skill-router",
+  "name": "Skill Router",
+  "version": "0.1.0",
+  "description": "Discovers, selects, composes, and routes Agent Skills with local-first matching.",
+  "entrypoints": {
+    "skill": "SKILL.md",
+    "install": "python3 -m skill_router.install",
+    "verify": "python3 -m skill_router.verify"
+  },
+  "capabilities": [
+    "local_skill_discovery",
+    "task_routing",
+    "skill_composition",
+    "external_registry_boundary"
+  ],
+  "permissions": [
+    "read_local_skill_directories",
+    "write_agent_skill_directory"
+  ],
+  "installation": {
+    "requires_user_confirmation": true,
+    "auto_install_external_skills": false,
+    "preserve_user_files": true
+  },
+  "compatibility": {
+    "required": ["skill_md"],
+    "optional": ["python3", "mcp"]
+  }
+}
