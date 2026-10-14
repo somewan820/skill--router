@@ -11,11 +11,11 @@ This repository is a portable Agent Skill package. An Agent receiving this repos
    - package id and version;
    - files to be written;
    - requested permissions;
-   - whether the optional Python runtime is available.
+   - whether the optional Node.js runtime is available.
 5. Ask for explicit confirmation before writing files.
 6. Install this repository as `<skill-directory>/skill-router/`.
 7. Do not run arbitrary repository scripts before reviewing them.
-8. Run `python3 -m skill_router.verify --path <installed-path>` if Python is available.
+8. Run `node dist/cli.js verify --path <installed-path>` if Node.js is available.
 9. Report the installed path, enabled capabilities, and any unavailable optional features.
 
 The installer writes an installation record. Updates replace only files managed by this package. Uninstallation refuses directories without that record and preserves files added by the user.
@@ -25,7 +25,9 @@ The installer writes an installation record. Updates replace only files managed 
 From the repository root, after user confirmation:
 
 ```bash
-python3 -m skill_router.install \
+npm install
+npm run build
+node dist/cli.js install \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
 ```
@@ -33,19 +35,14 @@ python3 -m skill_router.install \
 To preview or confirm removal:
 
 ```bash
-python3 -m skill_router.install uninstall \
+node dist/cli.js uninstall \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router"
-python3 -m skill_router.install uninstall \
+node dist/cli.js uninstall \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
 ```
 
-Preview without changing files:
-
-```bash
-python3 -m skill_router.install \
-  --destination "$AGENT_SKILL_DIRECTORY/skill-router"
-```
+Preview without changing files by omitting `--approve` from the reference install command.
 
 The reference installer never chooses a vendor-specific directory automatically. The host Agent supplies the destination it supports.
 

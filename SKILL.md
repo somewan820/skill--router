@@ -28,10 +28,10 @@ The host Agent should persist the mode in its own configuration. A single reques
 
 ## Runtime
 
-When Python is available, use the bundled runtime:
+When Node.js is available, use the bundled runtime:
 
 ```bash
-python3 -m skill_router.cli route "USER_TASK"
+node dist/cli.js route "USER_TASK"
 ```
 
 Use `--mode manual --use SKILL_NAME` for explicit selection. Use `--mode off` to bypass routing.

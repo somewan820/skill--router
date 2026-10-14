@@ -2,12 +2,12 @@
   "schema_version": "1.0",
   "id": "skill-router",
   "name": "Skill Router",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Discovers, selects, composes, and routes Agent Skills with local-first matching.",
   "entrypoints": {
     "skill": "SKILL.md",
-    "install": "python3 -m skill_router.install",
-    "verify": "python3 -m skill_router.verify"
+    "install": "node dist/cli.js install",
+    "verify": "node dist/cli.js verify"
   },
   "capabilities": [
     "local_skill_discovery",
@@ -28,6 +28,6 @@
   },
   "compatibility": {
     "required": ["skill_md"],
-    "optional": ["python3", "mcp"]
+    "optional": ["node", "mcp"]
   }
 }

@@ -19,24 +19,26 @@
 如果在仓库根目录手动执行参考安装器：
 
 ```bash
-python3 -m skill_router.install \
+npm install
+npm run build
+node dist/cli.js install \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router"
 ```
 
 上面的命令只会预览安装文件。确认后再执行：
 
 ```bash
-python3 -m skill_router.install \
+node dist/cli.js install \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
-python3 -m skill_router.verify \
+node dist/cli.js verify \
   --path "$AGENT_SKILL_DIRECTORY/skill-router"
 ```
 
 更新时使用同一个安装命令即可；安装器会覆盖它自己管理的文件，并保留目标目录中的用户文件：
 
 ```bash
-python3 -m skill_router.install \
+node dist/cli.js install \
   --source . \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
@@ -45,14 +47,14 @@ python3 -m skill_router.install \
 卸载前先预览：
 
 ```bash
-python3 -m skill_router.install uninstall \
+node dist/cli.js uninstall \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router"
 ```
 
 确认卸载：
 
 ```bash
-python3 -m skill_router.install uninstall \
+node dist/cli.js uninstall \
   --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
 ```
@@ -60,17 +62,17 @@ python3 -m skill_router.install uninstall \
 ## 快速开始
 
 ```bash
-python3 -m skill_router.cli --skills-dir ~/.cursor/skills \
+node dist/cli.js --skills-dir ~/.cursor/skills \
   route "请读取这个飞书文档并提取待办：https://your-document-host/docx/abc"
 ```
 
 设置模式：
 
 ```bash
-python3 -m skill_router.cli config --mode manual
-python3 -m skill_router.cli config --mode off
-python3 -m skill_router.cli config --mode auto
-python3 -m skill_router.cli status
+node dist/cli.js config --mode manual
+node dist/cli.js config --mode off
+node dist/cli.js config --mode auto
+node dist/cli.js status
 ```
 
 配置默认保存到 `~/.config/skill-router/config.json`。也可以通过 `--config-file` 或 `SKILL_ROUTER_CONFIG` 指定其他配置文件。
@@ -78,7 +80,7 @@ python3 -m skill_router.cli status
 配置外部搜索和最大 Skill 数量：
 
 ```bash
-python3 -m skill_router.cli config \
+node dist/cli.js config \
   --mode auto \
   --allow-external-search \
   --max-skills 3
@@ -87,20 +89,20 @@ python3 -m skill_router.cli config \
 配置通用远程 Registry：
 
 ```bash
-python3 -m skill_router.cli config \
+node dist/cli.js config \
   --registry-url https://registry.example.com/skills
 ```
 
 查询本地 Skill：
 
 ```bash
-python3 -m skill_router.cli search "代码审查"
+node dist/cli.js search "代码审查"
 ```
 
 查询已配置的远程 Registry：
 
 ```bash
-python3 -m skill_router.cli \
+node dist/cli.js \
   --registry-url https://registry.example.com/skills \
   search --external "database migration"
 ```
@@ -110,7 +112,7 @@ python3 -m skill_router.cli \
 单次请求可以覆盖持久化配置：
 
 ```bash
-python3 -m skill_router.cli route \
+node dist/cli.js route \
   --mode off \
   "这次不要自动选择 Skill"
 ```

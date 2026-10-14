@@ -1,0 +1,33 @@
+{
+  "name": "skill-router",
+  "version": "0.2.0",
+  "description": "Local-first routing and composition for Agent Skills",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npm run build && node --test test/*.test.js",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "verify": "npm run build && node dist/cli.js verify --path .",
+    "install-package": "npm run build && node dist/cli.js install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/somewan820/skill--router.git"
+  },
+  "keywords": [],
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/somewan820/skill--router/issues"
+  },
+  "homepage": "https://github.com/somewan820/skill--router#readme",
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  },
+  "bin": {
+    "skill-router": "dist/cli.js"
+  }
+}
