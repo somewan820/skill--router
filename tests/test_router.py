@@ -11,7 +11,7 @@ from skill_router.verify import verify
 
 def write_skill(root: Path, name: str, body: str) -> None:
     path = root / name
-    path.mkdir()
+    path.mkdir(parents=True)
     (path / "SKILL.md").write_text(body, encoding="utf-8")
 
 
@@ -69,6 +69,31 @@ triggers: [待办, 行动项, 任务]
         ))
         self.assertEqual(result.action, "external_search")
         self.assertTrue(result.external_search)
+
+    def test_chinese_development_intent_routes_to_review_and_linear(self):
+        root = Path(self.temp.name) / "development-skills"
+        write_skill(root, "code-review", """---
+name: code-review
+description: Review code changes for security, regression, compatibility, and correctness
+operations: [review]
+triggers: [code review, pull request, diff, security, regression, compatibility]
+---
+# review
+""")
+        write_skill(root, "linear", """---
+name: linear
+description: Create and update Linear issues, tickets, and projects
+operations: [create_issue]
+triggers: [Linear, issue, ticket, project]
+---
+# linear
+""")
+        result = SkillRouter(LocalRegistry([root])).route(RouteRequest(
+            "请审查当前分支的代码变更，检查安全性和回归风险；"
+            "把问题创建成 Linear 工单并关联到当前项目。",
+        ))
+        self.assertEqual(result.action, "load")
+        self.assertEqual({item.name for item in result.selected}, {"code-review", "linear"})
 
     def test_skill_package_manifest_is_valid(self):
         root = Path(__file__).parents[1]

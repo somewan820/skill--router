@@ -11,6 +11,32 @@ def _tokens(text: str) -> set[str]:
     return set(re.findall(r"[\w.-]+", text.lower()))
 
 
+INTENT_ALIASES = {
+    "审查": ("review", "code"),
+    "评审": ("review", "code"),
+    "代码审查": ("code", "review"),
+    "代码评审": ("code", "review"),
+    "代码变更": ("code", "diff", "change"),
+    "当前分支": ("branch", "diff"),
+    "安全性": ("security",),
+    "回归风险": ("regression",),
+    "兼容性": ("compatibility",),
+    "创建": ("create",),
+    "工单": ("ticket", "issue"),
+    "问题": ("finding", "issue"),
+    "项目": ("project",),
+    "关联": ("link", "associate"),
+}
+
+
+def _expanded_tokens(text: str) -> set[str]:
+    tokens = _tokens(text)
+    for phrase, aliases in INTENT_ALIASES.items():
+        if phrase in text:
+            tokens.update(aliases)
+    return tokens
+
+
 class SkillRouter:
     def __init__(self, registry: Registry):
         self.registry = registry
@@ -64,7 +90,7 @@ class SkillRouter:
 
     def _rank(self, text: str, skills: list[SkillMetadata]) -> list[SkillSelection]:
         query = text.lower()
-        words = _tokens(query)
+        words = _expanded_tokens(query)
         scored: list[SkillSelection] = []
         for skill in skills:
             metadata = set(_tokens(" ".join([
@@ -77,7 +103,7 @@ class SkillRouter:
                 skill.resource_types or skill.domains
             ) else 0
             penalty = sum(0.2 for item in skill.not_for if item.lower() in query)
-            score = min(1.0, overlap / max(4, min(12, len(words))) + exact_triggers * 0.2 + url_bonus - penalty)
+            score = min(1.0, overlap / max(4, min(10, len(words))) + exact_triggers * 0.2 + url_bonus - penalty)
             if score >= 0.28:
                 reason = f"匹配 {overlap} 个任务词"
                 if exact_triggers:
