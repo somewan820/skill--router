@@ -32,7 +32,7 @@ class SkillRouter:
 
         skills = self.registry.list()
         selections = self._rank(request.text, skills)
-        selections = self._with_dependencies(selections, skills, request.max_skills)
+        selections, warnings = self._with_dependencies(selections, skills, request.max_skills)
         if not selections:
             return RouteResult(
                 request.mode,
@@ -47,6 +47,7 @@ class SkillRouter:
             selections,
             min(1.0, selections[0].score),
             reason=self._reason(selections),
+            warnings=warnings,
             plan=self._plan(selections, skills),
         )
 
@@ -119,7 +120,7 @@ class SkillRouter:
 
     def _with_dependencies(
         self, selections: list[SkillSelection], skills: list[SkillMetadata], max_skills: int
-    ) -> list[SkillSelection]:
+    ) -> tuple[list[SkillSelection], list[str]]:
         by_name = {skill.name: skill for skill in skills}
         result: dict[str, SkillSelection] = {item.name: item for item in selections[:max_skills]}
         queue = list(result.values())
@@ -141,29 +142,32 @@ class SkillRouter:
     def _dependency_order(
         selections: dict[str, SkillSelection],
         skills: dict[str, SkillMetadata],
-    ) -> list[SkillSelection]:
+    ) -> tuple[list[SkillSelection], list[str]]:
         ordered: list[SkillSelection] = []
         visited: set[str] = set()
         visiting: set[str] = set()
+        warnings: list[str] = []
 
-        def visit(name: str) -> None:
+        def visit(name: str, trail: tuple[str, ...] = ()) -> None:
             if name in visited:
                 return
-            # A cycle should not make routing fail. Keep the first encountered
-            # node and let the execution layer report the cycle if needed.
             if name in visiting:
+                cycle = " -> ".join((*trail, name))
+                warning = f"检测到 Skill 依赖环：{cycle}"
+                if warning not in warnings:
+                    warnings.append(warning)
                 return
             visiting.add(name)
             for dependency in skills.get(name, SkillMetadata("", "")).dependencies:
                 if dependency in selections:
-                    visit(dependency)
+                    visit(dependency, (*trail, name))
             visiting.remove(name)
             visited.add(name)
             ordered.append(selections[name])
 
         for name in selections:
             visit(name)
-        return ordered
+        return ordered, warnings
 
     @staticmethod
     def _reason(selections: list[SkillSelection]) -> str:

@@ -149,6 +149,29 @@ triggers: [credentials]
             ["credential-provider", "data-source", "renderer"],
         )
 
+    def test_dependency_cycles_are_reported_as_warnings(self):
+        root = Path(self.temp.name) / "cyclic-skills"
+        write_skill(root, "alpha", """---
+name: alpha
+description: Alpha processing
+triggers: [alpha]
+dependencies: [beta]
+---
+# alpha
+""")
+        write_skill(root, "beta", """---
+name: beta
+description: Beta processing
+triggers: [beta]
+dependencies: [alpha]
+---
+# beta
+""")
+        result = SkillRouter(LocalRegistry([root])).route(
+            RouteRequest("run alpha and beta", max_skills=2)
+        )
+        self.assertTrue(any("依赖环" in warning for warning in result.warnings))
+
     def test_installer_previews_then_copies_after_approval(self):
         source = Path(__file__).parents[1]
         destination = Path(self.temp.name) / "installed" / "skill-router"

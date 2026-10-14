@@ -54,6 +54,7 @@ class RouteResult:
     reason: str = ""
     external_search: bool = False
     install_required: bool = False
+    warnings: list[str] = field(default_factory=list)
     plan: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -69,6 +70,7 @@ class RouteResult:
             "reason": self.reason,
             "external_search": self.external_search,
             "install_required": self.install_required,
+            "warnings": self.warnings,
             "plan": self.plan,
         }
 
