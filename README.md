@@ -20,24 +20,24 @@
 
 ```bash
 python3 -m skill_router.install \
-  --destination /path/to/your/agent/skills/skill-router
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router"
 ```
 
 上面的命令只会预览安装文件。确认后再执行：
 
 ```bash
 python3 -m skill_router.install \
-  --destination /path/to/your/agent/skills/skill-router \
+  --destination "$AGENT_SKILL_DIRECTORY/skill-router" \
   --approve
 python3 -m skill_router.verify \
-  --path /path/to/your/agent/skills/skill-router
+  --path "$AGENT_SKILL_DIRECTORY/skill-router"
 ```
 
 ## 快速开始
 
 ```bash
-python -m skill_router.cli --skills-dir ~/.cursor/skills \
-  route "请读取这个飞书文档并提取待办：https://example.com/docx/abc"
+python3 -m skill_router.cli --skills-dir ~/.cursor/skills \
+  route "请读取这个飞书文档并提取待办：https://your-document-host/docx/abc"
 ```
 
 设置模式：
