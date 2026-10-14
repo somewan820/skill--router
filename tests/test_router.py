@@ -1,9 +1,12 @@
 import tempfile
 import unittest
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from threading import Thread
 
 from skill_router.models import RouteMode, RouteRequest
-from skill_router.registry import LocalRegistry
+from skill_router.models import SkillMetadata
+from skill_router.registry import HttpRegistry, LocalRegistry
 from skill_router.router import SkillRouter
 from skill_router.install import INSTALL_RECORD, install, uninstall
 from skill_router.verify import verify
@@ -70,6 +73,53 @@ triggers: [待办, 行动项, 任务]
         ))
         self.assertEqual(result.action, "external_search")
         self.assertTrue(result.external_search)
+
+    def test_external_registry_candidates_are_returned_without_installing(self):
+        class FakeRegistry:
+            name = "test-registry"
+
+            def search(self, query):
+                return [
+                    SkillMetadata(
+                        "remote-tool",
+                        "A remote tool",
+                        source=self.name,
+                        version="2.0.0",
+                        operations=("inspect",),
+                    )
+                ]
+
+        result = SkillRouter(
+            LocalRegistry([Path(self.temp.name) / "empty"]),
+            [FakeRegistry()],
+        ).route(RouteRequest("inspect an unknown artifact", allow_external_search=True))
+        self.assertEqual(result.action, "external_candidates")
+        self.assertEqual(result.external_candidates[0]["name"], "remote-tool")
+        self.assertFalse(result.install_required)
+
+    def test_http_registry_parses_standard_json_response(self):
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"skills":[{"name":"remote-tool","description":"Inspect artifacts","operations":["inspect"]}]}')
+
+            def log_message(self, *_):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            registry = HttpRegistry(f"http://127.0.0.1:{server.server_port}/search")
+            skills = registry.search("inspect")
+            self.assertEqual(skills[0].name, "remote-tool")
+            self.assertTrue(skills[0].source.startswith("127.0.0.1:"))
+        finally:
+            server.shutdown()
+            thread.join()
+            server.server_close()
 
     def test_chinese_development_intent_routes_to_review_and_linear(self):
         root = Path(self.temp.name) / "development-skills"

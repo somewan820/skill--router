@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .config import RouterConfig, default_path, load, save
 from .models import RouteMode, RouteRequest
-from .registry import LocalRegistry
+from .registry import HttpRegistry, LocalRegistry
 from .router import SkillRouter
 
 
@@ -15,6 +15,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="skill-router")
     parser.add_argument("--skills-dir", action="append", default=None)
     parser.add_argument("--config-file", default=None)
+    parser.add_argument("--registry-url", action="append", default=None)
     sub = parser.add_subparsers(dest="command", required=True)
 
     route = sub.add_parser("route")
@@ -28,7 +29,11 @@ def main() -> int:
     config.add_argument("--mode", choices=[mode.value for mode in RouteMode])
     config.add_argument("--allow-external-search", action=argparse.BooleanOptionalAction, default=None)
     config.add_argument("--max-skills", type=int, default=None)
+    config.add_argument("--registry-url", action="append", default=None)
     sub.add_parser("status")
+    search = sub.add_parser("search")
+    search.add_argument("query")
+    search.add_argument("--external", action="store_true")
 
     args = parser.parse_args()
     config_path = args.config_file or default_path()
@@ -42,6 +47,7 @@ def main() -> int:
                 else current.allow_external_search
             ),
             max_skills=args.max_skills if args.max_skills is not None else current.max_skills,
+            registry_urls=tuple(args.registry_url) if args.registry_url is not None else current.registry_urls,
         )
         if updated.max_skills < 1:
             parser.error("--max-skills must be >= 1")
@@ -56,7 +62,38 @@ def main() -> int:
         "SKILL_ROUTER_SKILLS_DIR", "~/.codex/skills:~/.cursor/skills"
     ).split(":")
     registry = LocalRegistry(skills_dirs)
-    result = SkillRouter(registry).route(RouteRequest(
+    registry_urls = args.registry_url if args.registry_url is not None else list(current.registry_urls)
+    external = [HttpRegistry(url) for url in registry_urls]
+    if args.command == "search":
+        results = [
+            {
+                "name": skill.name,
+                "description": skill.description,
+                "source": skill.source,
+                "version": skill.version,
+                "operations": list(skill.operations),
+            }
+            for skill in registry.search(args.query)
+        ]
+        if args.external:
+            for remote in external:
+                try:
+                    matches = remote.search(args.query)
+                except Exception:
+                    continue
+                results.extend(
+                    {
+                        "name": skill.name,
+                        "description": skill.description,
+                        "source": skill.source,
+                        "version": skill.version,
+                        "operations": list(skill.operations),
+                    }
+                    for skill in matches
+                )
+        print(json.dumps({"query": args.query, "results": results}, ensure_ascii=False, indent=2))
+        return 0
+    result = SkillRouter(registry, external).route(RouteRequest(
         text=args.text,
         mode=RouteMode(args.mode) if args.mode else current.mode,
         explicit_skills=tuple(args.explicit_skills),
@@ -72,6 +109,7 @@ def _config_dict(config: RouterConfig) -> dict[str, object]:
         "mode": config.mode.value,
         "allow_external_search": config.allow_external_search,
         "max_skills": config.max_skills,
+        "registry_urls": list(config.registry_urls),
     }
 
 

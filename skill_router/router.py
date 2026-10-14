@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from .models import RouteMode, RouteRequest, RouteResult, SkillMetadata, SkillSelection
-from .registry import Registry
+from .registry import ExternalRegistry, Registry
 
 
 def _tokens(text: str) -> set[str]:
@@ -21,8 +21,9 @@ def _contains(text: str, values: tuple[str, ...]) -> int:
 
 
 class SkillRouter:
-    def __init__(self, registry: Registry):
+    def __init__(self, registry: Registry, external_registries: list[ExternalRegistry] | None = None):
         self.registry = registry
+        self.external_registries = external_registries or []
 
     def route(self, request: RouteRequest) -> RouteResult:
         if request.mode is RouteMode.OFF:
@@ -34,11 +35,15 @@ class SkillRouter:
         selections = self._rank(request.text, skills)
         selections, warnings = self._with_dependencies(selections, skills, request.max_skills)
         if not selections:
+            candidates = self._external_candidates(request)
             return RouteResult(
                 request.mode,
-                "external_search" if request.allow_external_search else "fallback",
+                "external_candidates" if candidates else (
+                    "external_search" if request.allow_external_search else "fallback"
+                ),
                 reason="本地没有达到置信度阈值的 Skill",
-                external_search=request.allow_external_search,
+                external_search=request.allow_external_search and not candidates,
+                external_candidates=candidates,
             )
 
         return RouteResult(
@@ -50,6 +55,27 @@ class SkillRouter:
             warnings=warnings,
             plan=self._plan(selections, skills),
         )
+
+    def _external_candidates(self, request: RouteRequest) -> list[dict[str, object]]:
+        if not request.allow_external_search:
+            return []
+        candidates: dict[tuple[str, str], dict[str, object]] = {}
+        for registry in self.external_registries:
+            try:
+                matches = registry.search(request.text)
+            except Exception as exc:
+                continue
+            for skill in matches:
+                candidates[(skill.source, skill.name)] = {
+                    "name": skill.name,
+                    "description": skill.description,
+                    "source": skill.source,
+                    "version": skill.version,
+                    "domains": list(skill.domains),
+                    "operations": list(skill.operations),
+                    "triggers": list(skill.triggers),
+                }
+        return list(candidates.values())
 
     def _manual(self, request: RouteRequest) -> RouteResult:
         known = {skill.name: skill for skill in self.registry.list()}

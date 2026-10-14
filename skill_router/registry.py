@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+from urllib.parse import quote, urlencode, urlparse
+from urllib.request import Request, urlopen
 from pathlib import Path
 from typing import Protocol
 
@@ -113,4 +115,70 @@ class ExternalRegistry(Protocol):
     def install(self, skill_id: str, destination: Path, *, approved: bool = False) -> Path:
         """Install only after explicit approval; implementations must not auto-install."""
         ...
+
+
+def _metadata_from_dict(data: dict[str, object], *, source: str) -> SkillMetadata | None:
+    name = str(data.get("name") or data.get("id") or "").strip()
+    description = str(data.get("description") or "").strip()
+    if not name or not description:
+        return None
+    try:
+        priority = int(data.get("priority", 0))
+    except (TypeError, ValueError):
+        priority = 0
+    return SkillMetadata(
+        name=name,
+        description=description,
+        source=source,
+        location=str(data["location"]) if data.get("location") else None,
+        domains=_tuple(data.get("domains")),
+        resource_types=_tuple(data.get("resource_types")),
+        operations=_tuple(data.get("operations")),
+        triggers=_tuple(data.get("triggers")),
+        not_for=_tuple(data.get("not_for")),
+        related_skills=_tuple(data.get("related_skills")),
+        dependencies=_tuple(data.get("dependencies")),
+        exclusive_group=str(data["exclusive_group"]) if data.get("exclusive_group") else None,
+        priority=priority,
+        version=str(data["version"]) if data.get("version") else None,
+    )
+
+
+class HttpRegistry:
+    """Generic read-only JSON Registry adapter.
+
+    The endpoint may return a list or ``{"skills": [...]}``. Each item uses
+    the same metadata fields as ``SKILL.md``. Installation remains separate.
+    """
+
+    def __init__(self, url: str, *, timeout: float = 10.0):
+        self.url = url
+        self.timeout = timeout
+        self.name = urlparse(url).netloc or url
+
+    def search(self, query: str) -> list[SkillMetadata]:
+        separator = "&" if "?" in self.url else "?"
+        url = f"{self.url}{separator}{urlencode({'q': query})}"
+        request = Request(url, headers={"Accept": "application/json", "User-Agent": "skill-router/0.1"})
+        with urlopen(request, timeout=self.timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        items = payload.get("skills", []) if isinstance(payload, dict) else payload
+        if not isinstance(items, list):
+            return []
+        return [
+            skill
+            for item in items
+            if isinstance(item, dict)
+            for skill in [_metadata_from_dict(item, source=self.name)]
+            if skill is not None
+        ]
+
+    def get_metadata(self, skill_id: str) -> SkillMetadata | None:
+        for skill in self.search(skill_id):
+            if skill.name == skill_id:
+                return skill
+        return None
+
+    def install(self, skill_id: str, destination: Path, *, approved: bool = False) -> Path:
+        raise NotImplementedError("Registry discovery is separate from approved package installation")
 

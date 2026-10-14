@@ -84,6 +84,29 @@ python3 -m skill_router.cli config \
   --max-skills 3
 ```
 
+配置通用远程 Registry：
+
+```bash
+python3 -m skill_router.cli config \
+  --registry-url https://registry.example.com/skills
+```
+
+查询本地 Skill：
+
+```bash
+python3 -m skill_router.cli search "代码审查"
+```
+
+查询已配置的远程 Registry：
+
+```bash
+python3 -m skill_router.cli \
+  --registry-url https://registry.example.com/skills \
+  search --external "database migration"
+```
+
+远程 Registry 只负责返回候选元数据，不会因为搜索结果自动安装 Skill。
+
 单次请求可以覆盖持久化配置：
 
 ```bash
@@ -137,6 +160,31 @@ priority: 10
 - 低置信度不自动加载；
 - `manual` 模式只接受用户显式指定的 Skill；
 - `off` 模式不自动路由。
+
+## 通用远程 Registry 协议
+
+Registry URL 接受一个 `q` 查询参数，并返回以下任一 JSON 结构：
+
+```json
+{
+  "skills": [
+    {
+      "name": "example-skill",
+      "description": "Does a specialized task",
+      "version": "1.0.0",
+      "domains": ["example"],
+      "resource_types": ["artifact"],
+      "operations": ["inspect"],
+      "triggers": ["inspect", "检查"],
+      "dependencies": [],
+      "exclusive_group": null,
+      "priority": 0
+    }
+  ]
+}
+```
+
+也可以直接返回数组。Registry 不负责安装；安装必须经过独立的包验证和用户确认流程。
 
 ## 下一步
 

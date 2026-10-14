@@ -13,6 +13,7 @@ class RouterConfig:
     mode: RouteMode = RouteMode.AUTO
     allow_external_search: bool = False
     max_skills: int = 3
+    registry_urls: tuple[str, ...] = ()
 
 
 def default_path() -> Path:
@@ -35,6 +36,7 @@ def load(path: str | Path | None = None) -> RouterConfig:
             mode=RouteMode(raw.get("mode", RouteMode.AUTO.value)),
             allow_external_search=bool(raw.get("allow_external_search", False)),
             max_skills=max(1, int(raw.get("max_skills", 3))),
+            registry_urls=tuple(str(url) for url in raw.get("registry_urls", ())),
         )
     except (TypeError, ValueError):
         return RouterConfig()
@@ -49,6 +51,7 @@ def save(config: RouterConfig, path: str | Path | None = None) -> Path:
                 "mode": config.mode.value,
                 "allow_external_search": config.allow_external_search,
                 "max_skills": config.max_skills,
+                "registry_urls": list(config.registry_urls),
             },
             ensure_ascii=False,
             indent=2,

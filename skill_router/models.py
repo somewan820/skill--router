@@ -55,6 +55,7 @@ class RouteResult:
     external_search: bool = False
     install_required: bool = False
     warnings: list[str] = field(default_factory=list)
+    external_candidates: list[dict[str, Any]] = field(default_factory=list)
     plan: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -71,6 +72,7 @@ class RouteResult:
             "external_search": self.external_search,
             "install_required": self.install_required,
             "warnings": self.warnings,
+            "external_candidates": self.external_candidates,
             "plan": self.plan,
         }
 
