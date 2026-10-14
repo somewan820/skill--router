@@ -122,14 +122,48 @@ class SkillRouter:
     ) -> list[SkillSelection]:
         by_name = {skill.name: skill for skill in skills}
         result: dict[str, SkillSelection] = {item.name: item for item in selections[:max_skills]}
-        for item in list(result.values()):
+        queue = list(result.values())
+        while queue:
+            item = queue.pop(0)
             for dependency in by_name.get(item.name, SkillMetadata("", "")).dependencies:
                 if dependency in by_name and len(result) < max_skills:
-                    result.setdefault(
-                        dependency,
-                        SkillSelection(dependency, item.score * 0.9, f"被 {item.name} 依赖"),
-                    )
-        return sorted(result.values(), key=lambda item: (-item.score, item.name))
+                    if dependency not in result:
+                        selected = SkillSelection(
+                            dependency,
+                            item.score * 0.9,
+                            f"被 {item.name} 依赖",
+                        )
+                        result[dependency] = selected
+                        queue.append(selected)
+        return self._dependency_order(result, by_name)
+
+    @staticmethod
+    def _dependency_order(
+        selections: dict[str, SkillSelection],
+        skills: dict[str, SkillMetadata],
+    ) -> list[SkillSelection]:
+        ordered: list[SkillSelection] = []
+        visited: set[str] = set()
+        visiting: set[str] = set()
+
+        def visit(name: str) -> None:
+            if name in visited:
+                return
+            # A cycle should not make routing fail. Keep the first encountered
+            # node and let the execution layer report the cycle if needed.
+            if name in visiting:
+                return
+            visiting.add(name)
+            for dependency in skills.get(name, SkillMetadata("", "")).dependencies:
+                if dependency in selections:
+                    visit(dependency)
+            visiting.remove(name)
+            visited.add(name)
+            ordered.append(selections[name])
+
+        for name in selections:
+            visit(name)
+        return ordered
 
     @staticmethod
     def _reason(selections: list[SkillSelection]) -> str:

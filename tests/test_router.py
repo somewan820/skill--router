@@ -113,6 +113,42 @@ triggers: [simplify, dead code, entropy]
         save(RouterConfig(RouteMode.MANUAL, True, 5), path)
         self.assertEqual(load(path), RouterConfig(RouteMode.MANUAL, True, 5))
 
+    def test_dependencies_are_recursively_ordered_before_dependents(self):
+        root = Path(self.temp.name) / "dependency-skills"
+        write_skill(root, "renderer", """---
+name: renderer
+description: Render a final artifact
+operations: [render]
+triggers: [render]
+dependencies: [data-source]
+---
+# renderer
+""")
+        write_skill(root, "data-source", """---
+name: data-source
+description: Load and normalize source data
+operations: [load]
+triggers: [data]
+dependencies: [credential-provider]
+---
+# data
+""")
+        write_skill(root, "credential-provider", """---
+name: credential-provider
+description: Resolve credentials for a connected service
+operations: [authenticate]
+triggers: [credentials]
+---
+# credentials
+""")
+        result = SkillRouter(LocalRegistry([root])).route(
+            RouteRequest("render data with credentials", max_skills=3)
+        )
+        self.assertEqual(
+            [item.name for item in result.selected],
+            ["credential-provider", "data-source", "renderer"],
+        )
+
     def test_installer_previews_then_copies_after_approval(self):
         source = Path(__file__).parents[1]
         destination = Path(self.temp.name) / "installed" / "skill-router"
