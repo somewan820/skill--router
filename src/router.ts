@@ -41,7 +41,8 @@ export class SkillRouter {
     }
     let selected = this.rank(request.text, skills);
     let semanticUsed = false;
-    if (!selected.length && request.semantic && this.semantic) {
+    const deterministicConfidence = selected.length ? Math.min(...selected.map((item) => item.score)) : 0;
+    if (request.semantic && this.semantic && (!selected.length || deterministicConfidence < 0.85 || selected.length > (request.max_skills || 3))) {
       try {
         semanticUsed = true;
         selected = (await this.semantic.rank(request.text, skills.slice(0, 20)))
