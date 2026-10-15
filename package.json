@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "npm run build && node --test test/*.test.js",
+    "evaluate": "npm run build && node evaluation/benchmark.mjs",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/cli.js",
     "verify": "npm run build && node dist/cli.js verify --path .",

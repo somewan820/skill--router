@@ -194,3 +194,18 @@ Registry URL 接受一个 `q` 查询参数，并返回以下任一 JSON 结构�
 2. 为外部 Skill 增加来源、版本、checksum 和用户确认安装流程。
 3. 将 `SkillRouter` 接入具体 Agent runtime 或 hook。
 
+## 收益评估
+
+运行可复现的本地路由基准：
+
+```bash
+npm run evaluate
+```
+
+基准数据位于 `evaluation/tasks.json`，运行器位于 `evaluation/benchmark.mjs`。它对比：
+
+- `control`：不选择任何 Skill 的路由基线；
+- `treatment`：启用 Skill Router 的结果。
+
+输出指标包括 Precision、Recall、F1、Exact Plan Accuracy、无 Skill 任务准确率、平均/P95 路由延迟，以及固定种子的 bootstrap 95% F1 区间。这个基准只衡量路由质量，不等价于真实 Agent 的任务完成时间或成本收益；生产结论需要使用相同任务分布做 Agent A/B 测试。
+

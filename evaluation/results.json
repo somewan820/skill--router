@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-10-15T03:25:27.954Z",
+  "dataset": {
+    "tasks": 30,
+    "catalogSkills": 8,
+    "source": "evaluation/tasks.json"
+  },
+  "control": {
+    "tasks": 30,
+    "expectedSelections": 33,
+    "truePositives": 0,
+    "falsePositives": 0,
+    "falseNegatives": 33,
+    "precision": 0,
+    "recall": 0,
+    "f1": 0,
+    "exactPlanAccuracy": 0.23333333333333334,
+    "negativeTaskSpecificity": 1,
+    "averageSelected": 0,
+    "averageLatencyMs": 0,
+    "p95LatencyMs": 0
+  },
+  "treatment": {
+    "tasks": 30,
+    "expectedSelections": 33,
+    "truePositives": 33,
+    "falsePositives": 5,
+    "falseNegatives": 0,
+    "precision": 0.868421052631579,
+    "recall": 1,
+    "f1": 0.9295774647887324,
+    "exactPlanAccuracy": 0.8666666666666667,
+    "negativeTaskSpecificity": 1,
+    "averageSelected": 1.2666666666666666,
+    "averageLatencyMs": 0.13837913333333418,
+    "p95LatencyMs": 0.30595800000000395,
+    "f1Bootstrap95": {
+      "lower": 0.8615384615384616,
+      "upper": 0.9859154929577464
+    }
+  },
+  "delta": {
+    "recall": 1,
+    "f1": 0.9295774647887324,
+    "exactPlanAccuracy": 0.6333333333333333,
+    "negativeTaskSpecificity": 0
+  }
+}
