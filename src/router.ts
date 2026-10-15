@@ -11,6 +11,18 @@ function tokens(text: string): Set<string> {
   return result;
 }
 
+function triggerMatches(query: string, trigger: string, queryTokens: Set<string>): boolean {
+  if (query.includes(trigger.toLowerCase())) return true;
+  if (/[\u3400-\u9fff]/.test(trigger)) {
+    const characters = [...trigger.toLowerCase()].filter((character) => /[\u3400-\u9fff]/.test(character));
+    return characters.length > 0 && characters.every((character) => query.includes(character));
+  }
+  const triggerTokens = new Set([...tokens(trigger)].filter(
+    (token) => !/[\u3400-\u9fff]/.test(token) || token.length <= 2,
+  ));
+  return triggerTokens.size > 0 && [...triggerTokens].every((token) => queryTokens.has(token));
+}
+
 export class SkillRouter {
   constructor(private readonly registry: Registry, private readonly external: HttpRegistry[] = []) {}
 
@@ -58,11 +70,11 @@ export class SkillRouter {
       const metadataTokens = tokens(metadata.join(" "));
       const overlap = [...queryTokens].filter((token) => metadataTokens.has(token)).length;
       const nameOverlap = [...tokens(skill.name)].filter((token) => queryTokens.has(token)).length;
-      const triggerHits = (skill.triggers || []).filter((trigger) => query.includes(trigger.toLowerCase())).length;
+      const triggerHits = (skill.triggers || []).filter((trigger) => triggerMatches(query, trigger, queryTokens)).length;
       const excludedHits = (skill.not_for || []).filter((term) => query.includes(term.toLowerCase())).length;
-      const score = Math.min(1, Math.min(.35, overlap / Math.max(8, queryTokens.size)) + Math.min(.5, triggerHits * .25) + Math.min(.35, nameOverlap * .2) + (skill.priority || 0) * .01 - Math.min(.5, excludedHits * .2));
+      const score = Math.min(1, Math.min(.35, overlap / Math.max(8, queryTokens.size)) + Math.min(.6, triggerHits * .3) + Math.min(.35, nameOverlap * .2) + (skill.priority || 0) * .01 - Math.min(.5, excludedHits * .2));
       return { skill, selection: { name: skill.name, score: Math.max(0, score), reason: `匹配 ${overlap} 个元数据词${triggerHits ? `，命中 ${triggerHits} 个触发词` : ""}` } };
-    }).filter((item) => item.selection.score >= .28).sort((a, b) => b.selection.score - a.selection.score || (b.skill.priority || 0) - (a.skill.priority || 0));
+    }).filter((item) => item.selection.score >= .25).sort((a, b) => b.selection.score - a.selection.score || (b.skill.priority || 0) - (a.skill.priority || 0));
     const groups = new Set<string>();
     return scored.filter(({ skill }) => !skill.exclusive_group || !groups.has(skill.exclusive_group) && !!groups.add(skill.exclusive_group)).slice(0, 20).map((item) => item.selection);
   }
