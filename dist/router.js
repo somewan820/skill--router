@@ -44,6 +44,7 @@ export class SkillRouter {
                 semanticUsed = true;
                 selected = (await this.semantic.rank(request.text, skills.slice(0, 20)))
                     .filter((item) => skills.some((skill) => skill.name === item.name))
+                    .filter((item) => item.confidence >= 0.6)
                     .map((item) => ({ name: item.name, score: Math.min(1, Math.max(0, item.confidence)), reason: item.reason }));
             }
             catch (error) {
@@ -63,7 +64,7 @@ export class SkillRouter {
             };
         }
         selected = ordered;
-        const confidence = selected[0].score;
+        const confidence = Math.min(...selected.map((item) => item.score));
         const action = semanticUsed
             ? confidence >= 0.85 ? "load" : confidence >= 0.6 ? "confirm" : "fallback"
             : "load";

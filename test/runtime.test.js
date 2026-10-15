@@ -110,3 +110,23 @@ description: A candidate capability
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("low-confidence semantic candidates are not loaded beside a high-confidence result", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "skill-router-semantic-filter-"));
+  try {
+    await mkdir(path.join(root, "high"));
+    await mkdir(path.join(root, "low"));
+    await writeFile(path.join(root, "high", "SKILL.md"), "---\nname: high\ndescription: High confidence capability\n---\n");
+    await writeFile(path.join(root, "low", "SKILL.md"), "---\nname: low\ndescription: Low confidence capability\n---\n");
+    const provider = path.join(root, "provider.mjs");
+    await writeFile(provider, 'process.stdin.on("data", () => {}); process.stdin.on("end", () => process.stdout.write(JSON.stringify({selections:[{name:"high",confidence:0.95,reason:"high"},{name:"low",confidence:0.2,reason:"low"}]})));');
+    const result = JSON.parse((await exec("node", [
+      cli, "--skills-dir", root, "route", "--semantic", "--semantic-command", `node ${provider}`,
+      "完成一个任务",
+    ])).stdout);
+    assert.deepEqual(result.selected, ["high"]);
+    assert.equal(result.action, "load");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
