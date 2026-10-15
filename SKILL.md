@@ -40,6 +40,8 @@ The runtime returns JSON containing selected Skills, confidence, reasons, and an
 
 When descriptions are not enough for deterministic matching, the host Agent may provide a semantic ranking command with `--semantic-command`. The command receives a JSON task plus candidate metadata on stdin and must return JSON selections with `name`, `confidence`, and `reason`. Do not treat semantic results as permission to install external Skills.
 
+When the user corrects a route, record the correction with the runtime `feedback` command so it can become a future regression case. Feedback is local-only unless the host Agent explicitly exports it.
+
 ## Installation safety
 
 When this Skill is provided as a repository URL:

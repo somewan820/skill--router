@@ -160,6 +160,28 @@ confidence < 0.60：拒绝自动加载
 
 语义 Provider 只能参与本地 Skill 选择，不能绕过外部 Skill 的安装确认。
 
+## 记录真实反馈
+
+用户可以把一次路由纠正记录下来，默认写入本地：
+
+```bash
+node dist/cli.js feedback \
+  --task "请从 GitHub 仓库安装一个 Skill" \
+  --selected code-review \
+  --corrected skill-installer
+```
+
+如果选择正确：
+
+```bash
+node dist/cli.js feedback \
+  --task "请运行测试并分析失败" \
+  --selected test-runner \
+  --accepted
+```
+
+反馈文件默认是 `~/.config/skill-router/feedback.jsonl`，也可以用 `--feedback-file` 指定路径。反馈只在本地保存，后续可用于生成回归任务、改进 Skill 元数据或评估路由质量。
+
 单次请求可以覆盖持久化配置：
 
 ```bash

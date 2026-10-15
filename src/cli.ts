@@ -6,6 +6,7 @@ import { LocalRegistry, HttpRegistry } from "./registry.js";
 import { SkillRouter } from "./router.js";
 import { verify } from "./verify.js";
 import { StdioSemanticProvider } from "./semantic.js";
+import { feedbackPath, recordFeedback } from "./feedback.js";
 import type { RouteMode } from "./models.js";
 
 const args = process.argv.slice(2);
@@ -13,10 +14,10 @@ const value = (name: string): string | undefined => { const index = args.indexOf
 const many = (name: string): string[] => args.flatMap((item: string, index: number) => item === name && args[index + 1] ? [args[index + 1]] : []);
 const has = (name: string) => args.includes(name);
 const json = (value: unknown) => console.log(JSON.stringify(value, null, 2));
-const commandNames = new Set(["route", "search", "config", "status", "install", "uninstall", "verify"]);
+const commandNames = new Set(["route", "search", "config", "status", "install", "uninstall", "verify", "feedback"]);
 const command = args.find((item) => commandNames.has(item));
 const configFile = value("--config-file");
-const optionValues = new Set(["--config-file", "--skills-dir", "--registry-url", "--mode", "--max-skills", "--use", "--source", "--destination", "--path", "--semantic-command"]);
+const optionValues = new Set(["--config-file", "--skills-dir", "--registry-url", "--mode", "--max-skills", "--use", "--source", "--destination", "--path", "--semantic-command", "--task", "--selected", "--corrected", "--feedback-file"]);
 function positional(): string[] {
   const commandIndex = command ? args.indexOf(command) : 0;
   const rest = args.slice(commandIndex + 1);
@@ -40,6 +41,16 @@ async function main(): Promise<void> {
   }
   if (command === "status") { json({ config_file: configPath(configFile), ...config }); return; }
   if (command === "verify") { const errors = await verify(value("--path") || "."); json({ valid: !errors.length, errors }); process.exitCode = errors.length ? 1 : 0; return; }
+  if (command === "feedback") {
+    const task = value("--task");
+    if (!task) throw new Error("--task is required");
+    const selected = many("--selected");
+    const corrected = many("--corrected");
+    const file = value("--feedback-file");
+    const target = await recordFeedback({ task, selected, corrected: corrected.length ? corrected : undefined, accepted: has("--accepted") }, file);
+    json({ recorded: true, file: target, task, selected, corrected, accepted: has("--accepted") });
+    return;
+  }
   if (command === "install" || command === "uninstall") {
     const destination = value("--destination"); if (!destination) throw new Error("--destination is required");
     json(command === "install" ? await install(value("--source") || ".", destination, has("--approve")) : await uninstall(destination, has("--approve"))); return;
