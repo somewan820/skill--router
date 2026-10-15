@@ -209,3 +209,5 @@ npm run evaluate
 
 输出指标包括 Precision、Recall、F1、Exact Plan Accuracy、无 Skill 任务准确率、平均/P95 路由延迟，以及固定种子的 bootstrap 95% F1 区间。这个基准只衡量路由质量，不等价于真实 Agent 的任务完成时间或成本收益；生产结论需要使用相同任务分布做 Agent A/B 测试。
 
+真实环境测试结果保存在 `evaluation/real-results.json`，对应任务集为 `evaluation/real-tasks.json`。该测试直接读取运行机器的实际 Skill 目录，因此结果会随已安装 Skill 和其描述变化，不应与合成基准混合比较。
+

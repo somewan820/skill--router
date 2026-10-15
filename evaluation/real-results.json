@@ -1,0 +1,282 @@
+{
+  "generatedAt": "2026-10-15T03:39:39.357Z",
+  "environment": {
+    "runtime": "TypeScript/Node.js",
+    "skillsDir": "/Users/some/.codex/skills",
+    "skillRouterVersion": "0.2.0"
+  },
+  "tasks": [
+    {
+      "text": "请审查当前 PR 的代码变更，找出安全和回归问题",
+      "expected": [
+        "code-review"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 175.186333
+    },
+    {
+      "text": "请在 Linear 创建一个 bug ticket",
+      "expected": [
+        "linear"
+      ],
+      "actual": [
+        "linear"
+      ],
+      "action": "load",
+      "confidence": 0.27692307692307694,
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "latencyMs": 167.337041
+    },
+    {
+      "text": "请做一次代码简化审计，删除不必要的复杂层",
+      "expected": [
+        "simplify-codebase"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 146.07633299999998
+    },
+    {
+      "text": "请从这个 GitHub 仓库安装一个 Skill",
+      "expected": [
+        "skill-installer"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 162.29266699999994
+    },
+    {
+      "text": "请创建一个新的 Codex Skill",
+      "expected": [
+        "skill-creator"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 163.23895800000003
+    },
+    {
+      "text": "Codex 的模型和设置应该怎么配置？",
+      "expected": [
+        "openai-docs"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 319.63824999999986
+    },
+    {
+      "text": "请生成一张产品概念图",
+      "expected": [
+        "imagegen"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 169.4302499999999
+    },
+    {
+      "text": "请教我如何学习数据库索引",
+      "expected": [
+        "learn-anything"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 154.62862500000006
+    },
+    {
+      "text": "请审查未提交的 diff，并只返回可执行缺陷",
+      "expected": [
+        "review-agent"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 149.36291700000015
+    },
+    {
+      "text": "请解释这段代码的作用",
+      "expected": [],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "latencyMs": 152.83883300000002
+    },
+    {
+      "text": "请实现一个用户登录接口",
+      "expected": [],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "latencyMs": 149.72429199999988
+    },
+    {
+      "text": "请更新 README 文档",
+      "expected": [],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "latencyMs": 160.14270800000008
+    },
+    {
+      "text": "请帮我查看当前 Linear 项目和团队工作流",
+      "expected": [
+        "linear"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 154.7739160000001
+    },
+    {
+      "text": "请做一次 pre-merge code review",
+      "expected": [
+        "code-review"
+      ],
+      "actual": [
+        "code-review"
+      ],
+      "action": "load",
+      "confidence": 0.3,
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "latencyMs": 144.17554100000007
+    },
+    {
+      "text": "请配置 Codex 的自动化任务",
+      "expected": [
+        "openai-docs"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 148.06220799999983
+    },
+    {
+      "text": "请把这个设计稿生成一张 PNG 图片",
+      "expected": [
+        "imagegen"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 145.17970800000012
+    },
+    {
+      "text": "请安装这个 GitHub skill 仓库并检查安装结果",
+      "expected": [
+        "skill-installer"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 142.536333
+    },
+    {
+      "text": "请删除重复 API 和无用抽象，降低代码复杂度",
+      "expected": [
+        "simplify-codebase"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 139.3816670000001
+    },
+    {
+      "text": "请创建一个 Linear 项目并更新团队工作流",
+      "expected": [
+        "linear"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 149.73520800000006
+    },
+    {
+      "text": "请比较两个模型的能力和价格",
+      "expected": [
+        "openai-docs"
+      ],
+      "actual": [],
+      "action": "fallback",
+      "confidence": 0,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "latencyMs": 147.38241599999992
+    }
+  ],
+  "summary": {
+    "taskCount": 20,
+    "positiveTasks": 17,
+    "negativeTasks": 3,
+    "truePositives": 2,
+    "falsePositives": 0,
+    "falseNegatives": 15,
+    "precision": 1,
+    "recall": 0.11764705882352941,
+    "f1": 0.21052631578947367,
+    "exactPlanAccuracy": 0.25,
+    "negativeSpecificity": 1,
+    "averageLatencyMs": 162.0562102
+  }
+}
