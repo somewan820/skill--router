@@ -6,7 +6,7 @@ export function configPath(file) {
 export async function loadConfig(file) {
     try {
         const value = JSON.parse(await readFile(configPath(file), "utf8"));
-        return { mode: value.mode || "auto", allow_external_search: !!value.allow_external_search, max_skills: Math.max(1, Number(value.max_skills || 3)), registry_urls: Array.isArray(value.registry_urls) ? value.registry_urls.map(String) : [] };
+        return { mode: value.mode || "auto", allow_external_search: !!value.allow_external_search, max_skills: Math.max(1, Number(value.max_skills || 3)), registry_urls: Array.isArray(value.registry_urls) ? value.registry_urls.map(String) : [], semantic_command: value.semantic_command ? String(value.semantic_command) : undefined };
     }
     catch {
         return { mode: "auto", allow_external_search: false, max_skills: 3, registry_urls: [] };

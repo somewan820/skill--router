@@ -56,3 +56,57 @@ test("structured triggers compose a complex task", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("semantic provider protocol can recover a natural-language match", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "skill-router-semantic-"));
+  try {
+    await mkdir(path.join(root, "installer"));
+    await writeFile(path.join(root, "installer", "SKILL.md"), `---
+name: installer
+description: Install skills from a repository
+---
+# installer
+`);
+    const provider = path.join(root, "provider.mjs");
+    await writeFile(provider, `
+let input = "";
+process.stdin.on("data", chunk => input += chunk);
+process.stdin.on("end", () => {
+  const payload = JSON.parse(input);
+  const match = payload.candidates.find(item => item.name === "installer");
+  process.stdout.write(JSON.stringify({ selections: [{ name: match.name, confidence: 0.96, reason: "semantic match" }] }));
+});
+`);
+    const result = JSON.parse((await exec("node", [
+      cli, "--skills-dir", root, "route", "--semantic", "--semantic-command", `node ${provider}`,
+      "请从 GitHub 仓库安装一个 Skill",
+    ])).stdout);
+    assert.deepEqual(result.selected, ["installer"]);
+    assert.equal(result.confidence, 0.96);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("semantic confidence requires confirmation below the auto-load threshold", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "skill-router-confidence-"));
+  try {
+    await mkdir(path.join(root, "candidate"));
+    await writeFile(path.join(root, "candidate", "SKILL.md"), `---
+name: candidate
+description: A candidate capability
+---
+# candidate
+`);
+    const provider = path.join(root, "provider.mjs");
+    await writeFile(provider, 'process.stdin.on("data", () => {}); process.stdin.on("end", () => process.stdout.write(JSON.stringify({selections:[{name:"candidate",confidence:0.7,reason:"uncertain"}]})));');
+    const result = JSON.parse((await exec("node", [
+      cli, "--skills-dir", root, "route", "--semantic", "--semantic-command", `node ${provider}`,
+      "请完成一个候选能力任务",
+    ])).stdout);
+    assert.equal(result.action, "confirm");
+    assert.equal(result.confidence, 0.7);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

@@ -15,7 +15,8 @@
     "skill_composition",
     "external_registry_search",
     "external_registry_boundary",
-    "safe_package_lifecycle"
+    "safe_package_lifecycle",
+    "semantic_provider_bridge"
   ],
   "permissions": [
     "read_local_skill_directories",
@@ -28,6 +29,6 @@
   },
   "compatibility": {
     "required": ["skill_md"],
-    "optional": ["node", "mcp"]
+    "optional": ["node", "mcp", "semantic_provider"]
   }
 }

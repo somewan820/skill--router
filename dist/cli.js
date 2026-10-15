@@ -5,6 +5,7 @@ import { install, uninstall } from "./install.js";
 import { LocalRegistry, HttpRegistry } from "./registry.js";
 import { SkillRouter } from "./router.js";
 import { verify } from "./verify.js";
+import { StdioSemanticProvider } from "./semantic.js";
 const args = process.argv.slice(2);
 const value = (name) => { const index = args.indexOf(name); return index >= 0 ? args[index + 1] : undefined; };
 const many = (name) => args.flatMap((item, index) => item === name && args[index + 1] ? [args[index + 1]] : []);
@@ -13,7 +14,7 @@ const json = (value) => console.log(JSON.stringify(value, null, 2));
 const commandNames = new Set(["route", "search", "config", "status", "install", "uninstall", "verify"]);
 const command = args.find((item) => commandNames.has(item));
 const configFile = value("--config-file");
-const optionValues = new Set(["--config-file", "--skills-dir", "--registry-url", "--mode", "--max-skills", "--use", "--source", "--destination", "--path"]);
+const optionValues = new Set(["--config-file", "--skills-dir", "--registry-url", "--mode", "--max-skills", "--use", "--source", "--destination", "--path", "--semantic-command"]);
 function positional() {
     const commandIndex = command ? args.indexOf(command) : 0;
     const rest = args.slice(commandIndex + 1);
@@ -32,7 +33,7 @@ function positional() {
 async function main() {
     const config = await loadConfig(configFile);
     if (command === "config") {
-        const updated = { mode: value("--mode") || config.mode, allow_external_search: value("--allow-external-search") === "true" || (has("--allow-external-search") ? true : config.allow_external_search), max_skills: Number(value("--max-skills") || config.max_skills), registry_urls: many("--registry-url").length ? many("--registry-url") : config.registry_urls };
+        const updated = { mode: value("--mode") || config.mode, allow_external_search: value("--allow-external-search") === "true" || (has("--allow-external-search") ? true : config.allow_external_search), max_skills: Number(value("--max-skills") || config.max_skills), registry_urls: many("--registry-url").length ? many("--registry-url") : config.registry_urls, semantic_command: value("--semantic-command") || config.semantic_command };
         json({ saved: await saveConfig(updated, configFile), ...updated });
         return;
     }
@@ -62,7 +63,9 @@ async function main() {
         return;
     }
     if (command === "route") {
-        json(await new SkillRouter(local, external).route({ text: query, mode: value("--mode") || config.mode, explicit_skills: many("--use"), allow_external_search: has("--allow-external-search") || config.allow_external_search, max_skills: Number(value("--max-skills") || config.max_skills) }));
+        const semanticCommand = value("--semantic-command") || config.semantic_command;
+        const provider = semanticCommand ? new StdioSemanticProvider(semanticCommand) : undefined;
+        json(await new SkillRouter(local, external, provider).route({ text: query, mode: value("--mode") || config.mode, explicit_skills: many("--use"), allow_external_search: has("--allow-external-search") || config.allow_external_search, max_skills: Number(value("--max-skills") || config.max_skills), semantic: has("--semantic") || Boolean(semanticCommand) }));
         return;
     }
     throw new Error("commands: route, search, config, status, install, uninstall, verify");

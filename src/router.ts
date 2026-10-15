@@ -1,4 +1,4 @@
-import type { RouteRequest, RouteResult, SkillMetadata, SkillSelection } from "./models.js";
+import type { RouteRequest, RouteResult, SemanticProvider, SkillMetadata, SkillSelection } from "./models.js";
 import type { Registry, HttpRegistry } from "./registry.js";
 
 function tokens(text: string): Set<string> {
@@ -24,7 +24,11 @@ function triggerMatches(query: string, trigger: string, queryTokens: Set<string>
 }
 
 export class SkillRouter {
-  constructor(private readonly registry: Registry, private readonly external: HttpRegistry[] = []) {}
+  constructor(
+    private readonly registry: Registry,
+    private readonly external: HttpRegistry[] = [],
+    private readonly semantic?: SemanticProvider,
+  ) {}
 
   async route(request: RouteRequest): Promise<RouteResult> {
     const mode = request.mode || "auto";
@@ -36,6 +40,20 @@ export class SkillRouter {
       return this.result(mode, selected.length ? "load" : "fallback", selected, "仅使用用户显式指定的 Skill");
     }
     let selected = this.rank(request.text, skills);
+    let semanticUsed = false;
+    if (!selected.length && request.semantic && this.semantic) {
+      try {
+        semanticUsed = true;
+        selected = (await this.semantic.rank(request.text, skills.slice(0, 20)))
+          .filter((item) => skills.some((skill) => skill.name === item.name))
+          .map((item) => ({ name: item.name, score: Math.min(1, Math.max(0, item.confidence)), reason: item.reason }));
+      } catch (error) {
+        return {
+          ...this.result(mode, "fallback", [], "语义 Provider 不可用"),
+          warnings: [`语义 Provider 失败：${String(error instanceof Error ? error.message : error)}`],
+        };
+      }
+    }
     const [ordered, warnings] = this.dependencies(selected, skills, request.max_skills || 3);
     if (!ordered.length) {
       const candidates = request.allow_external_search ? await this.externalCandidates(request.text) : [];
@@ -46,9 +64,19 @@ export class SkillRouter {
       };
     }
     selected = ordered;
+    const confidence = selected[0].score;
+    const action = semanticUsed
+      ? confidence >= 0.85 ? "load" : confidence >= 0.6 ? "confirm" : "fallback"
+      : "load";
+    if (semanticUsed && action === "fallback") {
+      return {
+        ...this.result(mode, action, [], "语义匹配置信度过低"),
+        warnings: ["语义匹配低于 0.60，未自动加载 Skill"],
+      };
+    }
     return {
-      ...this.result(mode, "load", selected, `根据任务内容选择 ${selected.map((item) => item.name).join(", ")}`),
-      confidence: selected[0].score,
+      ...this.result(mode, action, selected, action === "confirm" ? "语义匹配需要用户确认" : `根据任务内容选择 ${selected.map((item) => item.name).join(", ")}`),
+      confidence,
       warnings,
       plan: selected.map((item) => ({ skill: item.name, depends_on: skills.find((skill) => skill.name === item.name)?.dependencies || [], reason: item.reason })),
     };

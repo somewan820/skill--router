@@ -109,6 +109,57 @@ node dist/cli.js \
 
 远程 Registry 只负责返回候选元数据，不会因为搜索结果自动安装 Skill。
 
+## 语义路由 Provider
+
+如果本地 Skill 只有自然语言描述、没有足够的结构化触发词，可以把宿主 Agent 的模型接入为通用语义 Provider：
+
+```bash
+node dist/cli.js route \
+  --semantic \
+  --semantic-command 'your-agent-semantic-provider' \
+  "请从这个 GitHub 仓库安装一个 Skill"
+```
+
+Provider 从 stdin 接收：
+
+```json
+{
+  "task": "用户任务",
+  "candidates": [
+    {
+      "name": "skill-installer",
+      "description": "Install skills from a GitHub repository"
+    }
+  ]
+}
+```
+
+并向 stdout 返回：
+
+```json
+{
+  "selections": [
+    {
+      "name": "skill-installer",
+      "confidence": 0.97,
+      "reason": "任务要求从 GitHub 仓库安装 Skill"
+    }
+  ]
+}
+```
+
+Router 不绑定模型供应商；Provider 由当前 Agent 决定。模型选择仍会经过本地 Skill 白名单、置信度、排他组和依赖检查。
+
+语义结果的决策阈值：
+
+```text
+confidence >= 0.85：自动加载
+0.60 <= confidence < 0.85：返回 confirm，等待用户确认
+confidence < 0.60：拒绝自动加载
+```
+
+语义 Provider 只能参与本地 Skill 选择，不能绕过外部 Skill 的安装确认。
+
 单次请求可以覆盖持久化配置：
 
 ```bash

@@ -38,6 +38,8 @@ Use `--mode manual --use SKILL_NAME` for explicit selection. Use `--mode off` to
 
 The runtime returns JSON containing selected Skills, confidence, reasons, and an execution plan. Load the selected Skills only after reviewing that result.
 
+When descriptions are not enough for deterministic matching, the host Agent may provide a semantic ranking command with `--semantic-command`. The command receives a JSON task plus candidate metadata on stdin and must return JSON selections with `name`, `confidence`, and `reason`. Do not treat semantic results as permission to install external Skills.
+
 ## Installation safety
 
 When this Skill is provided as a repository URL:

@@ -23,6 +23,7 @@ export interface RouteRequest {
   explicit_skills?: string[];
   allow_external_search?: boolean;
   max_skills?: number;
+  semantic?: boolean;
 }
 
 export interface SkillSelection {
@@ -43,4 +44,14 @@ export interface RouteResult {
   warnings: string[];
   external_candidates: Record<string, unknown>[];
   plan: Record<string, unknown>[];
+}
+
+export interface SemanticCandidate {
+  name: string;
+  confidence: number;
+  reason: string;
+}
+
+export interface SemanticProvider {
+  rank(task: string, candidates: SkillMetadata[]): Promise<SemanticCandidate[]>;
 }
