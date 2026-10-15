@@ -13,7 +13,10 @@ import type { SemanticCandidate, SemanticProvider, SkillMetadata } from "./model
  * model, vendor, or protocol is behind it.
  */
 export class StdioSemanticProvider implements SemanticProvider {
-  constructor(private readonly command: string, private readonly timeoutMs = 15_000) {}
+  constructor(
+    private readonly command: string,
+    private readonly timeoutMs = Number(process.env.SKILL_ROUTER_SEMANTIC_TIMEOUT_MS || 120_000),
+  ) {}
 
   async rank(task: string, candidates: SkillMetadata[]): Promise<SemanticCandidate[]> {
     return new Promise((resolve, reject) => {

@@ -117,6 +117,7 @@ node dist/cli.js \
 node dist/cli.js route \
   --semantic \
   --semantic-command 'your-agent-semantic-provider' \
+  --semantic-timeout 120000 \
   "请从这个 GitHub 仓库安装一个 Skill"
 ```
 

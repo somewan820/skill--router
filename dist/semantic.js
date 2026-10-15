@@ -13,7 +13,7 @@ import { spawn } from "node:child_process";
 export class StdioSemanticProvider {
     command;
     timeoutMs;
-    constructor(command, timeoutMs = 15_000) {
+    constructor(command, timeoutMs = Number(process.env.SKILL_ROUTER_SEMANTIC_TIMEOUT_MS || 120_000)) {
         this.command = command;
         this.timeoutMs = timeoutMs;
     }

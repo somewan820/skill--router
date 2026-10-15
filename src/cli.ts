@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   if (command === "search") { json({ query, results: await local.search(query), external: has("--external") ? (await Promise.all(external.map((item) => item.search(query).catch(() => [])))).flat() : [] }); return; }
   if (command === "route") {
     const semanticCommand = value("--semantic-command") || config.semantic_command;
-    const provider = semanticCommand ? new StdioSemanticProvider(semanticCommand) : undefined;
+    const provider = semanticCommand ? new StdioSemanticProvider(semanticCommand, Number(value("--semantic-timeout") || 120_000)) : undefined;
     json(await new SkillRouter(local, external, provider).route({ text: query, mode: (value("--mode") as RouteMode) || config.mode, explicit_skills: many("--use"), allow_external_search: has("--allow-external-search") || config.allow_external_search, max_skills: Number(value("--max-skills") || config.max_skills), semantic: has("--semantic") || Boolean(semanticCommand) }));
     return;
   }
